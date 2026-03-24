@@ -53,7 +53,15 @@ enum ProductCategory {
   mobile(encoded: 0, label: 'Mobile', icon: '📱'),
   bike(encoded: 1, label: 'Bike', icon: '🏍️'),
   cycle(encoded: 2, label: 'Cycle', icon: '🚲'),
-  homeAppliance(encoded: 3, label: 'Home Appliance', icon: '🏠');
+  homeAppliance(encoded: 3, label: 'Home Appliance', icon: '🏠'),
+  laptop(encoded: 4, label: 'Laptop', icon: '💻'),
+  television(encoded: 5, label: 'Television', icon: '📺'),
+  camera(encoded: 6, label: 'Camera', icon: '📷'),
+  car(encoded: 7, label: 'Car', icon: '🚗'),
+  furniture(encoded: 8, label: 'Furniture', icon: '🛋️'),
+  gaming(encoded: 9, label: 'Gaming', icon: '🎮'),
+  watch(encoded: 10, label: 'Watch', icon: '⌚'),
+  sportsEquipment(encoded: 11, label: 'Sports Equipment', icon: '🏋️');
 
   const ProductCategory({
     required this.encoded,

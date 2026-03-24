@@ -188,7 +188,20 @@ class _InputWizardScreenState extends ConsumerState<InputWizardScreen> {
           color:         _color?.trim().isEmpty == true ? null : _color?.trim(),
           batteryHealth: _batteryHealthSet ? _batteryHealth : null,
         );
+      case ProductCategory.laptop:
+        return CategoryExtras(
+          storage: _storage,
+          ram:     _ram,
+          color:   _color?.trim().isEmpty == true ? null : _color?.trim(),
+        );
       case ProductCategory.bike:
+        return CategoryExtras(
+          kmDriven:       int.tryParse(_kmDrivenCtrl.text),
+          fuelType:       _fuelType,
+          insuranceValid: _insuranceValid,
+          rcAvailable:    _rcAvailable,
+        );
+      case ProductCategory.car:
         return CategoryExtras(
           kmDriven:       int.tryParse(_kmDrivenCtrl.text),
           fuelType:       _fuelType,
@@ -203,6 +216,35 @@ class _InputWizardScreenState extends ConsumerState<InputWizardScreen> {
       case ProductCategory.homeAppliance:
         return CategoryExtras(
           energyStarRating: _energyStarRating,
+          capacity: _capacityCtrl.text.trim().isEmpty
+              ? null
+              : _capacityCtrl.text.trim(),
+        );
+      case ProductCategory.television:
+        return CategoryExtras(
+          energyStarRating: _energyStarRating,
+          capacity: _capacityCtrl.text.trim().isEmpty
+              ? null
+              : _capacityCtrl.text.trim(),
+        );
+      case ProductCategory.camera:
+        return CategoryExtras(storage: _storage);
+      case ProductCategory.furniture:
+        return CategoryExtras(
+          capacity: _capacityCtrl.text.trim().isEmpty
+              ? null
+              : _capacityCtrl.text.trim(),
+        );
+      case ProductCategory.gaming:
+        return CategoryExtras(storage: _storage);
+      case ProductCategory.watch:
+        return CategoryExtras(
+          capacity: _capacityCtrl.text.trim().isEmpty
+              ? null
+              : _capacityCtrl.text.trim(),
+        );
+      case ProductCategory.sportsEquipment:
+        return CategoryExtras(
           capacity: _capacityCtrl.text.trim().isEmpty
               ? null
               : _capacityCtrl.text.trim(),
@@ -521,17 +563,33 @@ class _Step1BasicInfo extends StatelessWidget {
   }
 
   String _brandHint(ProductCategory cat) => switch (cat) {
-        ProductCategory.mobile       => 'Samsung, Apple, OnePlus…',
-        ProductCategory.bike         => 'Honda, Royal Enfield, Bajaj…',
-        ProductCategory.cycle        => 'Hero, Firefox, Trek…',
-        ProductCategory.homeAppliance => 'LG, Samsung, Voltas…',
+        ProductCategory.mobile          => 'Samsung, Apple, OnePlus…',
+        ProductCategory.laptop          => 'Apple, Dell, HP, Lenovo…',
+        ProductCategory.television      => 'Samsung, LG, Sony, TCL…',
+        ProductCategory.camera          => 'Canon, Nikon, Sony, GoPro…',
+        ProductCategory.car             => 'Maruti, Hyundai, Tata, Honda…',
+        ProductCategory.bike            => 'Honda, Royal Enfield, Bajaj…',
+        ProductCategory.cycle           => 'Hero, Firefox, Trek…',
+        ProductCategory.homeAppliance   => 'LG, Samsung, Voltas…',
+        ProductCategory.furniture       => 'Godrej, Durian, IKEA…',
+        ProductCategory.gaming          => 'Sony, Microsoft, Nintendo…',
+        ProductCategory.watch           => 'Apple, Samsung, Casio, Titan…',
+        ProductCategory.sportsEquipment => 'Decathlon, Cosco, Nivia…',
       };
 
   String _modelHint(ProductCategory cat) => switch (cat) {
-        ProductCategory.mobile       => 'iPhone 14 Pro, Galaxy S23…',
-        ProductCategory.bike         => 'Activa 6G, Classic 350…',
-        ProductCategory.cycle        => 'Blast Pro, Impulse…',
-        ProductCategory.homeAppliance => 'Split 1.5 Ton, 5-Star…',
+        ProductCategory.mobile          => 'iPhone 14 Pro, Galaxy S23…',
+        ProductCategory.laptop          => 'MacBook Air M2, Inspiron 15…',
+        ProductCategory.television      => '55" 4K QLED, Bravia 43"…',
+        ProductCategory.camera          => 'EOS 200D, Alpha A7 III…',
+        ProductCategory.car             => 'Swift Dzire, Creta, Nexon…',
+        ProductCategory.bike            => 'Activa 6G, Classic 350…',
+        ProductCategory.cycle           => 'Blast Pro, Impulse…',
+        ProductCategory.homeAppliance   => 'Split 1.5 Ton, 5-Star…',
+        ProductCategory.furniture       => '3-seater sofa, Queen bed…',
+        ProductCategory.gaming          => 'PS5, Xbox Series X, Switch…',
+        ProductCategory.watch           => 'Apple Watch S9, Galaxy Watch…',
+        ProductCategory.sportsEquipment => 'Treadmill, Dumbbells set…',
       };
 }
 
@@ -597,10 +655,18 @@ class _Step2Extras extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (title, subtitle) = switch (category) {
-      ProductCategory.mobile        => ('Specifications', 'Storage, RAM & battery details'),
-      ProductCategory.bike          => ('Vehicle Details', 'Mileage, fuel & documents'),
-      ProductCategory.cycle         => ('Cycle Details', 'Usage & gear type'),
-      ProductCategory.homeAppliance => ('Appliance Details', 'Energy rating & capacity'),
+      ProductCategory.mobile          => ('Specifications', 'Storage, RAM & battery details'),
+      ProductCategory.laptop          => ('Specifications', 'Storage, RAM & color'),
+      ProductCategory.television      => ('TV Details', 'Energy rating & screen size'),
+      ProductCategory.camera          => ('Camera Details', 'Memory card / storage'),
+      ProductCategory.car             => ('Vehicle Details', 'Mileage, fuel & documents'),
+      ProductCategory.bike            => ('Vehicle Details', 'Mileage, fuel & documents'),
+      ProductCategory.cycle           => ('Cycle Details', 'Usage & gear type'),
+      ProductCategory.homeAppliance   => ('Appliance Details', 'Energy rating & capacity'),
+      ProductCategory.furniture       => ('Furniture Details', 'Material & type'),
+      ProductCategory.gaming          => ('Console Details', 'Storage & platform'),
+      ProductCategory.watch           => ('Watch Details', 'Type & material'),
+      ProductCategory.sportsEquipment => ('Equipment Details', 'Type & specifications'),
     };
 
     return SingleChildScrollView(
@@ -622,10 +688,18 @@ class _Step2Extras extends StatelessWidget {
 
   List<Widget> _buildFields(BuildContext context) {
     return switch (category) {
-      ProductCategory.mobile        => _mobileFields(context),
-      ProductCategory.bike          => _bikeFields(context),
-      ProductCategory.cycle         => _cycleFields(context),
-      ProductCategory.homeAppliance => _applianceFields(context),
+      ProductCategory.mobile          => _mobileFields(context),
+      ProductCategory.laptop          => _laptopFields(context),
+      ProductCategory.television      => _televisionFields(context),
+      ProductCategory.camera          => _cameraFields(context),
+      ProductCategory.car             => _bikeFields(context),
+      ProductCategory.bike            => _bikeFields(context),
+      ProductCategory.cycle           => _cycleFields(context),
+      ProductCategory.homeAppliance   => _applianceFields(context),
+      ProductCategory.furniture       => _furnitureFields(context),
+      ProductCategory.gaming          => _gamingFields(context),
+      ProductCategory.watch           => _watchFields(context),
+      ProductCategory.sportsEquipment => _sportsFields(context),
     };
   }
 
@@ -734,6 +808,103 @@ class _Step2Extras extends StatelessWidget {
           controller: capacityCtrl,
           decoration: const InputDecoration(
             hintText: '1.5 Ton, 500L, 7 kg…',
+          ),
+        ),
+      ];
+
+  // ── Laptop ─────────────────────────────────────────────────────────────────
+
+  List<Widget> _laptopFields(BuildContext context) => [
+        const _InputLabel('Storage'),
+        _ChipSelector(
+          options: const ['128GB', '256GB', '512GB', '1TB', '2TB'],
+          selected: storage,
+          onSelected: onStorageChanged,
+        ),
+        const SizedBox(height: 20),
+        const _InputLabel('RAM'),
+        _ChipSelector(
+          options: const ['4GB', '8GB', '16GB', '32GB', '64GB'],
+          selected: ram,
+          onSelected: onRamChanged,
+        ),
+        const SizedBox(height: 20),
+        const _InputLabel('Color (optional)'),
+        _ColorTextField(onChanged: onColorChanged, initialValue: color),
+      ];
+
+  // ── Television ─────────────────────────────────────────────────────────────
+
+  List<Widget> _televisionFields(BuildContext context) => [
+        const _InputLabel('Energy Star Rating'),
+        _StarRatingPicker(
+          value: energyStarRating,
+          onChanged: onEnergyStarChanged,
+        ),
+        const SizedBox(height: 20),
+        const _InputLabel('Screen Size (optional)'),
+        TextFormField(
+          controller: capacityCtrl,
+          decoration: const InputDecoration(
+            hintText: '43", 55", 65"…',
+          ),
+        ),
+      ];
+
+  // ── Camera ─────────────────────────────────────────────────────────────────
+
+  List<Widget> _cameraFields(BuildContext context) => [
+        const _InputLabel('Memory Card / Storage'),
+        _ChipSelector(
+          options: const ['16GB', '32GB', '64GB', '128GB', '256GB'],
+          selected: storage,
+          onSelected: onStorageChanged,
+        ),
+      ];
+
+  // ── Furniture ──────────────────────────────────────────────────────────────
+
+  List<Widget> _furnitureFields(BuildContext context) => [
+        const _InputLabel('Material / Type (optional)'),
+        TextFormField(
+          controller: capacityCtrl,
+          decoration: const InputDecoration(
+            hintText: 'Teak wood, 3-seater sofa, L-shaped…',
+          ),
+        ),
+      ];
+
+  // ── Gaming ─────────────────────────────────────────────────────────────────
+
+  List<Widget> _gamingFields(BuildContext context) => [
+        const _InputLabel('Console Storage'),
+        _ChipSelector(
+          options: const ['500GB', '1TB', '2TB'],
+          selected: storage,
+          onSelected: onStorageChanged,
+        ),
+      ];
+
+  // ── Watch ──────────────────────────────────────────────────────────────────
+
+  List<Widget> _watchFields(BuildContext context) => [
+        const _InputLabel('Type / Material (optional)'),
+        TextFormField(
+          controller: capacityCtrl,
+          decoration: const InputDecoration(
+            hintText: 'Smartwatch, Stainless steel, Leather strap…',
+          ),
+        ),
+      ];
+
+  // ── Sports Equipment ───────────────────────────────────────────────────────
+
+  List<Widget> _sportsFields(BuildContext context) => [
+        const _InputLabel('Type / Specifications (optional)'),
+        TextFormField(
+          controller: capacityCtrl,
+          decoration: const InputDecoration(
+            hintText: 'Treadmill 2HP, 20kg dumbbells set…',
           ),
         ),
       ];

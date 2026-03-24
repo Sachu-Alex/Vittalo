@@ -20,7 +20,14 @@ import 'package:vittalo/features/price_estimator/presentation/widgets/wizard_pro
 class InputWizardArgs {
   final CategoryModel category;
   final String? imagePath;
-  const InputWizardArgs({required this.category, this.imagePath});
+  /// When set, the wizard pre-populates all fields so the user can edit and
+  /// re-estimate without re-entering everything from scratch.
+  final ProductInput? prefill;
+  const InputWizardArgs({
+    required this.category,
+    this.imagePath,
+    this.prefill,
+  });
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -42,7 +49,8 @@ class _InputWizardScreenState extends ConsumerState<InputWizardScreen> {
   final _originalPriceCtrl = TextEditingController();
   final _brandCtrl         = TextEditingController();
   final _modelCtrl         = TextEditingController();
-  DateTime _purchaseDate   = DateTime.now().subtract(const Duration(days: 365));
+  // Null until user explicitly picks — prevents misleading auto-selection
+  DateTime? _purchaseDate;
 
   // ── Step 2: Category-Specific Extras ─────────────────────────────────────
   // Mobile
@@ -78,6 +86,48 @@ class _InputWizardScreenState extends ConsumerState<InputWizardScreen> {
 
   final _formKeys = List.generate(_totalSteps, (_) => GlobalKey<FormState>());
 
+  // ── Prefill from existing ProductInput (edit & re-estimate flow) ──────────
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.args.prefill;
+    if (p == null) return;
+
+    _originalPriceCtrl.text = p.originalPrice.round().toString();
+    _brandCtrl.text         = p.brand;
+    _modelCtrl.text         = p.model;
+    _purchaseDate           = p.purchaseDate;
+    _conditionPercent       = p.conditionPercent;
+    _hasPhysicalDamage      = p.hasPhysicalDamage;
+    _hasFunctionalIssues    = p.hasFunctionalIssues;
+    _accessoriesIncluded    = p.accessoriesIncluded;
+    if (p.currentMarketPrice != null) {
+      _marketPriceCtrl.text = p.currentMarketPrice!.round().toString();
+    }
+    _reasonCtrl.text        = p.reasonForSelling;
+    _conditionDescCtrl.text = p.conditionDescription;
+
+    final x = p.extras;
+    _storage  = x.storage;
+    _ram      = x.ram;
+    _color    = x.color;
+    if (x.batteryHealth != null) {
+      _batteryHealth    = x.batteryHealth!;
+      _batteryHealthSet = true;
+    }
+    if (x.kmDriven != null) {
+      _kmDrivenCtrl.text = x.kmDriven!.toString();
+    }
+    _fuelType        = x.fuelType;
+    _insuranceValid  = x.insuranceValid;
+    _rcAvailable     = x.rcAvailable;
+    _gearType        = x.gearType;
+    _energyStarRating = x.energyStarRating;
+    if (x.capacity != null) {
+      _capacityCtrl.text = x.capacity!;
+    }
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -96,6 +146,13 @@ class _InputWizardScreenState extends ConsumerState<InputWizardScreen> {
 
   void _nextStep() {
     if (!_formKeys[_currentStep].currentState!.validate()) return;
+    // Step 1 — ensure user explicitly picked a purchase date
+    if (_currentStep == 0 && _purchaseDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select the purchase date')),
+      );
+      return;
+    }
     if (_currentStep < _totalSteps - 1) {
       setState(() => _currentStep++);
       _pageController.animateToPage(
@@ -163,7 +220,7 @@ class _InputWizardScreenState extends ConsumerState<InputWizardScreen> {
     final input = ProductInput(
       category:            widget.args.category.category,
       originalPrice:       originalPrice,
-      purchaseDate:        _purchaseDate,
+      purchaseDate:        _purchaseDate!,
       brand:               _brandCtrl.text.trim(),
       model:               _modelCtrl.text.trim(),
       conditionPercent:    _conditionPercent,
@@ -193,7 +250,7 @@ class _InputWizardScreenState extends ConsumerState<InputWizardScreen> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _purchaseDate,
+      initialDate: _purchaseDate ?? DateTime.now().subtract(const Duration(days: 365)),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
@@ -327,7 +384,7 @@ class _Step1BasicInfo extends StatelessWidget {
   final TextEditingController priceCtrl;
   final TextEditingController brandCtrl;
   final TextEditingController modelCtrl;
-  final DateTime purchaseDate;
+  final DateTime? purchaseDate;
   final VoidCallback onPickDate;
   final CategoryModel category;
 
@@ -343,7 +400,11 @@ class _Step1BasicInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ageMonths = DateTime.now().difference(purchaseDate).inDays ~/ 30;
+    final hasDate   = purchaseDate != null;
+    final ageMonths = hasDate
+        ? DateTime.now().difference(purchaseDate!).inDays ~/ 30
+        : 0;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppConstants.pagePadding),
       child: Form(
@@ -374,7 +435,7 @@ class _Step1BasicInfo extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
-            const _InputLabel('Purchase Date'),
+            const _InputLabel('Purchase Date *'),
             GestureDetector(
               onTap: onPickDate,
               child: Container(
@@ -383,33 +444,50 @@ class _Step1BasicInfo extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: VittaloColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: VittaloColors.cardBorder),
+                  border: Border.all(
+                    color: hasDate
+                        ? VittaloColors.cardBorder
+                        : VittaloColors.primary.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded,
-                        size: 18, color: VittaloColors.textSecondary),
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 18,
+                      color: hasDate
+                          ? VittaloColors.textSecondary
+                          : VittaloColors.primary,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        DateFormat('dd MMM yyyy').format(purchaseDate),
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: VittaloColors.primaryContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '$ageMonths mo old',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: VittaloColors.primaryLight,
+                        hasDate
+                            ? DateFormat('dd MMM yyyy').format(purchaseDate!)
+                            : 'Tap to select purchase date',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: hasDate
+                                  ? null
+                                  : VittaloColors.textDisabled,
                             ),
                       ),
                     ),
+                    if (hasDate)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: VittaloColors.primaryContainer,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '$ageMonths mo old',
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: VittaloColors.primaryLight,
+                                  ),
+                        ),
+                      ),
                   ],
                 ),
               ),

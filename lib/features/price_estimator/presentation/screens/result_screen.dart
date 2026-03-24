@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:vittalo/core/constants/app_constants.dart';
 import 'package:vittalo/core/router/app_router.dart';
 import 'package:vittalo/core/theme/app_theme.dart';
+import 'package:vittalo/features/category_selection/domain/models/category_model.dart';
 import 'package:vittalo/features/price_estimator/domain/entities/price_result.dart';
+import 'package:vittalo/features/price_estimator/presentation/screens/input_wizard_screen.dart';
 import 'package:vittalo/features/price_estimator/presentation/widgets/price_range_card.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -45,6 +47,8 @@ class ResultScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 _ProductSummaryCard(result: result),
                 const SizedBox(height: 28),
+                _EditReEstimateButton(result: result),
+                const SizedBox(height: 12),
                 _NewEstimateButton(),
                 const SizedBox(height: 16),
               ]),
@@ -419,6 +423,41 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
+// ─── Edit & Re-Estimate Button ────────────────────────────────────────────────
+
+class _EditReEstimateButton extends StatelessWidget {
+  final PriceResult result;
+  const _EditReEstimateButton({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          final categoryModel = CategoryModel.all.firstWhere(
+            (m) => m.category == result.input.category,
+          );
+          context.push(
+            AppRoutes.inputWizard,
+            extra: InputWizardArgs(
+              category: categoryModel,
+              imagePath: result.input.imagePath,
+              prefill: result.input,
+            ),
+          );
+        },
+        icon: const Icon(Icons.edit_rounded, size: 18),
+        label: const Text('Edit & Re-estimate'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: VittaloColors.primary,
+          side: const BorderSide(color: VittaloColors.primary),
+        ),
+      ),
+    ).animate(delay: 600.ms).fadeIn(duration: 400.ms);
+  }
+}
+
 // ─── New Estimate Button ──────────────────────────────────────────────────────
 
 class _NewEstimateButton extends StatelessWidget {
@@ -431,6 +470,6 @@ class _NewEstimateButton extends StatelessWidget {
         icon: const Icon(Icons.add_rounded),
         label: const Text('New Estimate'),
       ),
-    ).animate(delay: 600.ms).fadeIn(duration: 400.ms);
+    ).animate(delay: 650.ms).fadeIn(duration: 400.ms);
   }
 }
